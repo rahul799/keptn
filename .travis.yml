@@ -279,7 +279,8 @@ jobs:
   # feature/bug/hotfix/patch branches build jobs
   ##################################################################################
   - stage: Partial Build for feature/bug/hotfix/patch branches (CLI + Docker Images)
-    if: branch =~ ^feature.*$ OR branch =~ ^bug.*$ OR branch =~ ^hotfix.*$ OR branch =~ ^patch.*$
+    # TODO: remove filter
+    if: branch = master #branch =~ ^feature.*$ OR branch =~ ^bug.*$ OR branch =~ ^hotfix.*$ OR branch =~ ^patch.*$
     os: osx
     before_script:
       - source ./travis-scripts/install_gcloud.sh
@@ -506,7 +507,8 @@ jobs:
 
   - &K3sStandaloneTest
     stage: Test K3s Standalone (--platform=kubernetes, --namespace=keptn-test)
-    if: (branch = master or branch =~ ^release.*$) AND (type = cron OR type = push) # run for any change on master/release-* on push as well as cron
+    # TODO: remove filter
+    if: branch = feature/2724/cli-get-evaluation-finished-events #(branch = master or branch =~ ^release.*$) AND (type = cron OR type = push) # run for any change on master/release-* on push as well as cron
     os: linux
     env:
       - K3S_VERSION=v1.16.10+k3s1 # see https://github.com/rancher/k3s/releases
