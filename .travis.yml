@@ -298,7 +298,8 @@ jobs:
         source ../travis-scripts/build_cli.sh "${TAG}" "${KUBE_CONSTRAINTS}"
         cd ..
       fi
-  - if: branch =~ ^feature.*$ OR branch =~ ^bug.*$ OR branch =~ ^hotfix.*$ OR branch =~ ^patch.*$
+   # TODO: remove filter
+  - if: branch = master #branch =~ ^feature.*$ OR branch =~ ^bug.*$ OR branch =~ ^hotfix.*$ OR branch =~ ^patch.*$
     os: linux
     before_script:
       - source ./travis-scripts/install_gcloud.sh
@@ -314,7 +315,8 @@ jobs:
           TAG="${TYPE}-${NUMBER}+${DATE}"
           source ./travis-scripts/build_latest_installer.sh "${TAG}"
         fi
-  - if: branch =~ ^feature.*$ OR branch =~ ^bug.*$ OR branch =~ ^hotfix.*$ OR branch =~ ^patch.*$
+    # TODO: remove filter
+  - if: branch = master #branch =~ ^feature.*$ OR branch =~ ^bug.*$ OR branch =~ ^hotfix.*$ OR branch =~ ^patch.*$
     os: linux
     services:
       - docker

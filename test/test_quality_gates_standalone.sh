@@ -165,6 +165,9 @@ sleep 10
 echo "Getting evaluation-done event with context-id: ${keptn_context_id}"
 response=$(get_evaluation_done_event ${keptn_context_id})
 
+# TODO: remove this line
+keptn get event evaluation-done --keptn-context="${keptn_context_id}"
+
 # print the response
 echo $response | jq .
 
