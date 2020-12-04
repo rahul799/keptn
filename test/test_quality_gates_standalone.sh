@@ -5,6 +5,12 @@ source test/utils.sh
 function cleanup() {
   echo "Executing cleanup..."
 
+  echo "Lighthouse-service logs:"
+  kubectl logs svc/lighthouse-service -n ${KEPTN_NAMESPACE} lighthouse-service
+
+  echo "Dynatrace-SLI-Service logs:"
+  kubectl logs svc/dynatrace-sli-service -n ${KEPTN_NAMESPACE} dynatrace-sli-service
+
   echo "Delete lighthouse-config configmap"
   kubectl delete configmap -n ${KEPTN_NAMESPACE} lighthouse-config
 
