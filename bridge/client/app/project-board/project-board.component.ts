@@ -20,8 +20,6 @@ import {EVENT_LABELS} from "../_models/event-labels";
 import {DtOverlayConfig} from "@dynatrace/barista-components/overlay";
 import {DtToggleButtonItem} from "@dynatrace/barista-components/toggle-button-group";
 import {ClipboardService} from "../_services/clipboard.service";
-import {DtQuickFilterDefaultDataSource, DtQuickFilterDefaultDataSourceConfig} from "@dynatrace/barista-components/experimental/quick-filter";
-import {isObject} from "@dynatrace/barista-components/core";
 
 @Component({
   selector: 'app-project-board',
@@ -31,18 +29,16 @@ import {isObject} from "@dynatrace/barista-components/core";
 export class ProjectBoardComponent implements OnInit, OnDestroy {
 
   private readonly unsubscribe$ = new Subject<void>();
-  private _tracesTimer: Subscription = Subscription.EMPTY;
-  private _sequencesTimer: Subscription = Subscription.EMPTY;
 
   public project$: Observable<Project>;
   public openApprovals$: Observable<Trace[]>;
 
   public currentRoot: Root;
-  public currentSequence: Root;
   public error: string = null;
 
   private _rootEventsTimerInterval = 30;
   private _tracesTimerInterval = 10;
+  private _tracesTimer: Subscription = Subscription.EMPTY;
 
   public projectName: string;
   public serviceName: string;
@@ -63,44 +59,6 @@ export class ProjectBoardComponent implements OnInit, OnDestroy {
     'cli': [],
     'api': []
   };
-
-  /** configuration for the quick filter */
-  private filterFieldData = {
-    autocomplete: [
-      {
-        name: 'Service',
-        showInSidebar: true,
-        autocomplete: [],
-      }, {
-        name: 'Stage',
-        showInSidebar: true,
-        autocomplete: [],
-      }, {
-        name: 'Sequence',
-        showInSidebar: true,
-        autocomplete: [
-        ],
-      }, {
-        name: 'Status',
-        showInSidebar: true,
-        autocomplete: [
-          { name: 'Active', value: 'active' },
-          { name: 'Failed', value: 'failed' },
-          { name: 'Succeeded', value: 'succeeded' },
-        ],
-      },
-    ],
-  };
-  private _config: DtQuickFilterDefaultDataSourceConfig = {
-    // Method to decide if a node should be displayed in the quick filter
-    showInSidebar: (node) => isObject(node) && node.showInSidebar,
-  };
-  public _filterDataSource = new DtQuickFilterDefaultDataSource(
-    this.filterFieldData,
-    this._config,
-  );
-  public _seqFilters = [];
-  private sequenceFilters = {};
 
   public keptnInfo: any;
   public currentTime: String;
@@ -154,11 +112,7 @@ export class ProjectBoardComponent implements OnInit, OnDestroy {
           this.eventId = params["eventId"];
           this.currentRoot = null;
 
-          this.project$ = this.dataService.projects.pipe(
-            map(projects => projects ? projects.find(project => {
-              return project.projectName === params['projectName'];
-            }) : null)
-          );
+          this.project$ = this.dataService.getProject(params['projectName']);
           this.openApprovals$ = this.dataService.openApprovals;
 
           this.project$
@@ -181,21 +135,6 @@ export class ProjectBoardComponent implements OnInit, OnDestroy {
               }
               if(this.currentRoot && !this.eventId)
                 this.eventId = this.currentRoot.traces[this.currentRoot.traces.length-1].id;
-
-              this.project$
-                .pipe(
-                  filter(project => !!project && !!project.getServices() && !!project.stages && !!project.sequences),
-                  take(1)
-                ).subscribe(project => {
-                  this.filterFieldData.autocomplete.find(f => f.name == 'Service').autocomplete = project.services.map(s => Object.assign({}, { name: s.serviceName, value: s.serviceName }));
-                  this.filterFieldData.autocomplete.find(f => f.name == 'Stage').autocomplete = project.stages.map(s => Object.assign({}, { name: s.stageName, value: s.stageName }));
-                  this.filterFieldData.autocomplete.find(f => f.name == 'Sequence').autocomplete = project.sequences.map(s => s.getShortType()).filter((v, i, a) => a.indexOf(v) === i).map(seqName => Object.assign({}, { name: seqName, value: seqName }))
-
-                  this._filterDataSource = new DtQuickFilterDefaultDataSource(
-                    this.filterFieldData,
-                    this._config,
-                  );
-                });
             });
 
           timer(0, this._rootEventsTimerInterval*1000)
@@ -303,11 +242,6 @@ export class ProjectBoardComponent implements OnInit, OnDestroy {
     this.loadTraces(this.currentRoot);
   }
 
-  selectSequence(event: any): void {
-    this.currentSequence = event.root;
-    this.loadTraces(this.currentSequence);
-  }
-
   selectDeployment(deployment: Trace, project: Project) {
     this.selectRoot({
       root: project.getServices().find(service => service.serviceName === deployment.data.service).roots.find(root => root.shkeptncontext === deployment.shkeptncontext),
@@ -354,13 +288,6 @@ export class ProjectBoardComponent implements OnInit, OnDestroy {
 
   selectView(view) {
     this.view = view;
-    if(this.view == 'sequences') {
-      if(this.currentSequence)
-        this.loadTraces(this.currentSequence);
-    } else if(this.view == 'services') {
-      if(this.currentRoot)
-        this.loadTraces(this.currentRoot);
-    }
   }
 
   filterEvents(event: DtCheckboxChange<string>, eventType: string): void {
@@ -383,40 +310,6 @@ export class ProjectBoardComponent implements OnInit, OnDestroy {
   getFilteredRoots(roots: Root[]) {
     if(roots)
       return roots.filter(r => this.filterEventTypes.indexOf(r.type) == -1);
-  }
-
-  filtersChanged(event) {
-    this._seqFilters = event.filters;
-    this.sequenceFilters = this._seqFilters.reduce((filters, filter) => {
-      if(!filters[filter[0].name])
-        filters[filter[0].name] = [];
-      filters[filter[0].name].push(filter[1].value);
-      return filters;
-    }, {});
-  }
-
-  getFilteredSequences(sequences: Root[]) {
-    if(sequences)
-      return sequences.filter(s => {
-        let res = true;
-        Object.keys(this.sequenceFilters||{}).forEach((key) => {
-          switch(key) {
-            case "Service":
-              res = res && this.sequenceFilters[key].includes(s.getService());
-              break;
-            case "Stage":
-              res = res && this.sequenceFilters[key].every(f => s.getStages().includes(f));
-              break;
-            case "Sequence":
-              res = res && this.sequenceFilters[key].includes(s.getShortType());
-              break;
-            case "Status":
-              res = res && this.sequenceFilters[key].includes(s.getStatus());
-              break;
-          }
-        });
-        return res;
-      });
   }
 
   selectStage($event, stage: Stage, filterType?: string) {

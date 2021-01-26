@@ -39,6 +39,4 @@ require (
 )
 
 // Transitive requirement from Helm: See https://github.com/helm/helm/blob/v3.1.2/go.mod
-replace (
-	github.com/Azure/go-autorest => github.com/Azure/go-autorest v13.3.2+incompatible
-)
+replace github.com/Azure/go-autorest => github.com/Azure/go-autorest v13.3.2+incompatible
