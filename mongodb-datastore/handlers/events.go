@@ -412,7 +412,7 @@ func aggregateFromDB(collectionName string, pipeline mongo.Pipeline, logger *kep
 	}
 	// close the cursor after the function has completed to avoid memory leaks
 	defer cur.Close(ctx)
-	result.Events = formatEventResults(cur, ctx, logger)
+	result.Events = formatEventResults(ctx, cur, logger)
 
 	return result, nil
 }
@@ -460,7 +460,7 @@ func findInDB(collectionName string, pageSize int64, nextPageKeyStr *string, onl
 	}
 	// close the cursor after the function has completed to avoid memory leaks
 	defer cur.Close(ctx)
-	result.Events = formatEventResults(cur, ctx, logger)
+	result.Events = formatEventResults(ctx, cur, logger)
 
 	result.PageSize = pageSize
 	result.TotalCount = totalCount
@@ -472,7 +472,7 @@ func findInDB(collectionName string, pageSize int64, nextPageKeyStr *string, onl
 	return &result, nil
 }
 
-func formatEventResults(cur *mongo.Cursor, ctx context.Context, logger *keptncommon.Logger) []*models.KeptnContextExtendedCE {
+func formatEventResults(ctx context.Context, cur *mongo.Cursor, logger *keptncommon.Logger) []*models.KeptnContextExtendedCE {
 	events := []*models.KeptnContextExtendedCE{}
 	for cur.Next(ctx) {
 		var outputEvent interface{}
