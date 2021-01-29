@@ -46,7 +46,7 @@
       </dt-tag-list>
     </div>
   </div>
-  <div *ngIf="_event.isApproval() && project.getRootEvent(project.getService(_event.data.service), _event).isApproval() == _event.getStage()">
+  <div *ngIf="_event.isApproval() && _event.isApprovalPending()">
     <table>
       <tr>
         <td><p class="m-0">Currently deployed artifact: </p></td>
