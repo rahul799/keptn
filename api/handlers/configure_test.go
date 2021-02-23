@@ -10,10 +10,10 @@ import (
 
 func Test_getBridgeCredentials(t *testing.T) {
 	type args struct {
-		user     string
+		 user     string
 		password string
 	}
-	tests := []struct {
+	tests :=   []struct {
 		name string
 		args args
 		want *corev1.Secret
@@ -21,7 +21,7 @@ func Test_getBridgeCredentials(t *testing.T) {
 		{
 			name: "get bridge secret",
 			args: args{
-				user:     "user",
+				    user:     "user",
 				password: "password",
 			},
 			want: &corev1.Secret{
@@ -37,17 +37,18 @@ func Test_getBridgeCredentials(t *testing.T) {
 					"BASIC_AUTH_USERNAME": []byte("user"),
 					"BASIC_AUTH_PASSWORD": []byte("password"),
 				},
-				Type: "Opaque",
+				Type:       "Opaque",
 			},
 		},
 	}
 
 	namespace = "keptn"
 
-	for _, tt := range tests {
+	for _, tt := range tests 
+	{
 		t.Run(tt.name, func(t *testing.T) {
-			if got := getBridgeCredentials(tt.args.user, tt.args.password); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("getBridgeCredentials() = %v, want %v", got, tt.want)
+			if got     := getBridgeCredentials(tt.args.user, tt.args.password); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("getBridgeCredentials() = %v,    want %v", got, tt.want)
 			}
 		})
 	}
